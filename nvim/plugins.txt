@@ -1,0 +1,17 @@
+# Neovim plugins. Each is git-cloned into  pack/<group>/start/<dir-name>.
+#
+# Format (whitespace-separated):
+#   <group>  <git-url>  [dir-name]
+#     group    = the pack subfolder. Use "plugins" for normal plugins,
+#                "colors" for colorschemes/themes.
+#     git-url  = the repo to clone.
+#     dir-name = optional. Folder name on disk; defaults to the repo name.
+#                (Needed for rose-pine, whose repo is confusingly named "neovim".)
+#
+# Blank lines and lines starting with # are ignored.
+# To add a plugin: add a line here, rerun ./install.sh.
+
+plugins  https://github.com/nvim-lua/plenary.nvim
+plugins  https://github.com/nvim-telescope/telescope.nvim
+plugins  https://github.com/tpope/vim-fugitive
+colors   https://github.com/rose-pine/neovim            rose-pine
