@@ -14,4 +14,8 @@
 plugins  https://github.com/nvim-lua/plenary.nvim
 plugins  https://github.com/nvim-telescope/telescope.nvim
 plugins  https://github.com/tpope/vim-fugitive
+plugins  https://github.com/folke/snacks.nvim
+plugins  https://github.com/coder/claudecode.nvim
+plugins  https://github.com/folke/which-key.nvim
+plugins  https://github.com/stevearc/oil.nvim
 colors   https://github.com/rose-pine/neovim            rose-pine
