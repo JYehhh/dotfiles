@@ -15,6 +15,9 @@ echo "==> Linking config files"
 ln -sf "$DOTFILES/tmux/.tmux.conf"   "$HOME/.tmux.conf"
 mkdir -p "$HOME/.config/nvim"
 ln -sf "$DOTFILES/nvim/init.lua"     "$HOME/.config/nvim/init.lua"
+GHOSTTY_DIR="$HOME/Library/Application Support/com.mitchellh.ghostty"
+mkdir -p "$GHOSTTY_DIR"
+ln -sf "$DOTFILES/ghostty/config.ghostty" "$GHOSTTY_DIR/config.ghostty"
 
 echo "==> Installing Homebrew formulae (from brew.txt)"
 brew_pkgs=$(read_list "$DOTFILES/brew.txt")
