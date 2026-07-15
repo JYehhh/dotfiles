@@ -41,7 +41,16 @@ vim.cmd.colorscheme("rose-pine-moon")
 
 -- Telescope: fuzzy finder. Lives in pack/plugins/start/, so it (and its
 -- plenary.nvim dependency) are already on the runtimepath by now.
-require("telescope").setup({})
+require("telescope").setup({
+  defaults = {
+    file_ignore_patterns = { "^.git/" },
+  },
+  pickers = {
+    find_files = {
+      hidden = true,
+    },
+  },
+})
 
 -- Fuzzy-finder keymaps:
 --   <leader>f  == Space then f  -> find files by name
