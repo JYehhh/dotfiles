@@ -12,6 +12,15 @@ vim.opt.relativenumber = true  -- + relative distances -> current line shows its
 -- Must be set before any <leader> mapping below.
 vim.g.mapleader = " "
 
+-- Completion menu behaviour (used by the built-in LSP autocomplete below):
+--   menu     = show the popup menu of suggestions
+--   menuone  = show it even when there's only ONE match
+--   noselect = DON'T auto-highlight the first item -- wait for me to pick one
+--   noinsert = DON'T insert any text until I confirm with <C-y>
+-- Together, noselect+noinsert mean the menu is a pure suggestion: nothing lands
+-- in the buffer (and <Esc> stays safe) until you deliberately accept.
+vim.opt.completeopt = { "menu", "menuone", "noselect", "noinsert" }
+
 -- which-key: after you press a prefix (like <leader> == Space) and PAUSE, a
 -- popup lists every key you can press next and what it does. Great for learning
 -- your own mappings -- it auto-reads the `desc = "..."` labels on the keymaps
