@@ -18,4 +18,5 @@ plugins  https://github.com/folke/snacks.nvim
 plugins  https://github.com/coder/claudecode.nvim
 plugins  https://github.com/folke/which-key.nvim
 plugins  https://github.com/stevearc/oil.nvim
+plugins  https://github.com/folke/flash.nvim
 colors   https://github.com/rose-pine/neovim            rose-pine

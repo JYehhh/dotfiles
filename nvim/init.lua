@@ -75,6 +75,19 @@ vim.keymap.set("n", "-", "<cmd>Oil<cr>", { desc = "Oil: open parent directory" }
 -- <leader>e floats the explorer center-screen -- the on-demand "pull it up" pop.
 vim.keymap.set("n", "<leader>e", "<cmd>Oil --float<cr>", { desc = "Oil: float file explorer" })
 
+-- flash.nvim: jump anywhere ON SCREEN by typing a couple of characters. As you
+-- type, every match gets a one-letter LABEL next to it -- press that letter and
+-- the cursor teleports there. It's `/search` without leaving your place or
+-- hitting `n` repeatedly. Pure Lua, no binaries (works fine under Santa).
+--   s{char}{char}  -> start a flash jump, then press a shown label to land
+-- It also SUPERCHARGES the keys you already know: f/t/F/T get labels too, so a
+-- second `;` is replaced by "just press the label of the one you want".
+-- NOTE: this overrides native `s` (= "substitute char", i.e. `cl`). That's the
+-- standard flash trade and rarely missed -- `cl` still does the same thing.
+require("flash").setup({})
+vim.keymap.set({ "n", "x", "o" }, "s", function() require("flash").jump() end,
+  { desc = "Flash: jump to any on-screen match" })
+
 -- Fugitive: Git inside Neovim. <leader>g opens the git status window
 -- (stage with `s`, unstage with `u`, commit with `cc`). Also `:Git blame`, `:Git log`.
 vim.keymap.set("n", "<leader>g", "<cmd>Git<cr>", { desc = "Fugitive: git status" })
