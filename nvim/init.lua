@@ -118,6 +118,93 @@ end
 -- and watch the count shrink -- the fix for the "how many did I have open?" pile-up.
 vim.keymap.set("n", "<leader>bd", "<cmd>bdelete<cr>", { desc = "Buffer: delete current" })
 
+-- lualine.nvim: the statusline at the BOTTOM of the window (bufferline is the
+-- top). The default statusline shows filename + position via an ugly printf
+-- format string; lualine gives you configurable SEGMENTS instead. Uses your
+-- devicons for the filetype glyph. Since it draws the mode itself, we turn off
+-- the built-in "-- INSERT --" text with showmode below.
+--   theme = "auto"  -> derive colours from the active colorscheme (tokyonight)
+--   globalstatus    -> ONE statusline for the whole window, not one per split
+-- Layout is six segments: a b c on the left, x y z on the right.
+vim.opt.showmode = false
+
+-- nvim-navic: an LSP-driven "breadcrumb" of where the cursor is in the code
+-- (e.g. Position › is_attacked). auto_attach hooks into any LSP that provides
+-- document symbols -- clangd/pyright/lua_ls all do -- so your LspAttach block
+-- needs no change. Pure Lua, no compile (Santa-safe). Feeds lualine_c below.
+require("nvim-navic").setup({
+  lsp = { auto_attach = true },
+  separator = " › ",
+  highlight = true,
+})
+
+require("lualine").setup({
+  options = {
+    theme = "auto",
+    globalstatus = true,
+    section_separators = { left = "", right = "" },   -- straight edges
+    component_separators = { left = "|", right = "|" },
+  },
+  -- All six sub-sections are set EXPLICITLY on purpose: lualine deep-merges
+  -- with 'keep', so any section you OMIT silently reverts to its default --
+  -- which is how "progress" kept reappearing. Empty {} is the only real drop.
+  sections = {
+    lualine_a = { "mode" },                                 -- NORMAL / INSERT / ...
+    lualine_b = { "branch", "diff" },                       -- pure git: branch + this file's +/~/- vs HEAD
+    lualine_c = {
+      { "filename", path = 1 },                             -- path = 1 -> relative path
+      -- navic breadcrumb -- left-aligned by the filename because it reads as a
+      -- path. Shows only when the LSP can supply document symbols.
+      {
+        function() return require("nvim-navic").get_location() end,
+        cond = function()
+          return package.loaded["nvim-navic"] and require("nvim-navic").is_available()
+        end,
+      },
+    },
+    lualine_x = {
+      -- Diagnostic MESSAGE for the line under the cursor -- the actual warning/
+      -- error text, so you can read it without a jump or a float. Sits left of
+      -- the count so it expands leftward without shoving anything. Coloured by
+      -- severity (red = error, yellow = warn). (Neovim's built-in search count
+      -- stays on the command line; lualine's searchcount was removed to free this.)
+      {
+        function()
+          local d = vim.diagnostic.get(0, { lnum = vim.fn.line(".") - 1 })[1]
+          return d and d.message or ""
+        end,
+        cond = function()
+          return #vim.diagnostic.get(0, { lnum = vim.fn.line(".") - 1 }) > 0
+        end,
+        fmt = function(s) return s:sub(1, 60) end,   -- truncate long messages
+        color = function()
+          local d = vim.diagnostic.get(0, { lnum = vim.fn.line(".") - 1 })[1]
+          local by_sev = { "#f7768e", "#e0af68", "#7dcfff", "#7dcfff" }  -- err/warn/info/hint
+          return d and { fg = by_sev[d.severity] } or nil
+        end,
+      },
+      -- Diagnostic COUNTS (clangd's ⚠/✗ totals), next to the server that makes them.
+      "diagnostics",
+      -- Attached LSP servers -- anchored in the corner, ALWAYS shown.
+      {
+        function()
+          local names = vim.tbl_map(function(c) return c.name end,
+            vim.lsp.get_clients({ bufnr = 0 }))
+          return #names > 0 and (" " .. table.concat(names, " ")) or ""
+        end,
+      },
+    },
+    lualine_y = {},                                         -- progress dropped
+    lualine_z = {},                                         -- location dropped
+  },
+  -- extensions: swap in a sensible statusline for SPECIAL buffers, so the bar
+  -- doesn't show a meaningless "oil:///..." or "fugitive:///..." path.
+  --   oil      -> shows the current directory when you're in the file explorer
+  --   fugitive -> shows git context in the :Git status window
+  --   quickfix -> labels the quickfix / location list window
+  extensions = { "oil", "fugitive", "quickfix" },
+})
+
 -- Fugitive: Git inside Neovim. <leader>g opens the git status window
 -- (stage with `s`, unstage with `u`, commit with `cc`). Also `:Git blame`, `:Git log`.
 vim.keymap.set("n", "<leader>g", "<cmd>Git<cr>", { desc = "Fugitive: git status" })
