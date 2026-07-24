@@ -84,7 +84,29 @@ vim.keymap.set("n", "<leader>g", "<cmd>Git<cr>", { desc = "Fugitive: git status"
 -- DIFF inside the editor -- accept/reject in nvim -- instead of being written
 -- to disk behind your back. Needs snacks.nvim (the terminal it opens in) and
 -- the `claude` CLI on your PATH (install via npm so it rides the `node` binary).
-require("snacks").setup({})       -- snacks provides the popup terminal
+-- snacks.nvim is a COLLECTION of ~25 small modules, and every one of them is
+-- OFF until you name it here -- which is why installing it appeared to do
+-- nothing. It's in plugins.txt because claudecode needs its popup terminal.
+require("snacks").setup({
+  -- scroll: animate the viewport instead of teleporting it. Applies to
+  -- <C-u>/<C-d>, <C-f>/<C-b>, zz/zt/zb, gg/G, and search jumps (n/N) -- so
+  -- your eye tracks where the text went rather than re-finding its place.
+  -- Mouse-wheel scrolling is deliberately left un-animated.
+  --   step  = ms PER LINE scrolled -- so short jumps are quick, long ones
+  --           take longer. This is the main speed knob.
+  --   total = a CEILING on the whole animation, not its duration. Stops
+  --           gg->G in a huge file from animating for a minute.
+  -- Plugin defaults are step=10, total=200. Below is deliberately snappier.
+  -- easing: 41 functions available (see :lua =require("snacks.animate.easing")).
+  --   "linear"  = constant speed (the stock choice, and what's set here)
+  --   "outQuad" = starts fast, decelerates in -- reads as "arriving"
+  scroll = {
+    animate = { duration = { step = 5, total = 100 }, easing = "linear" },
+    -- Scroll again within 100ms and it switches to THIS instead -- which is
+    -- why holding <C-d> already felt faster than a single press.
+    animate_repeat = { delay = 100, duration = { step = 3, total = 40 } },
+  },
+})
 require("claudecode").setup({})   -- defaults: connects to `claude` found on PATH
 
 --   <leader>a  == Space then a  -> toggle the Claude Code session
