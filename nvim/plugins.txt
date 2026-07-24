@@ -19,4 +19,8 @@ plugins  https://github.com/coder/claudecode.nvim
 plugins  https://github.com/folke/which-key.nvim
 plugins  https://github.com/stevearc/oil.nvim
 plugins  https://github.com/folke/flash.nvim
+plugins  https://github.com/nvim-tree/nvim-web-devicons
+plugins  https://github.com/akinsho/bufferline.nvim
 colors   https://github.com/rose-pine/neovim            rose-pine
+colors   https://github.com/folke/tokyonight.nvim
+colors   https://github.com/catppuccin/nvim              catppuccin

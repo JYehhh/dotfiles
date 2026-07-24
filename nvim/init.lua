@@ -27,17 +27,16 @@ vim.opt.completeopt = { "menu", "menuone", "noselect", "noinsert" }
 -- further down. Pure Lua, no extra binaries.
 require("which-key").setup()
 
--- rose-pine lives in pack/colors/start/, so it's already on the runtimepath
--- by the time this file runs -- no plugin manager needed.
-require("rose-pine").setup({
-  variant = "moon",            -- "moon" == the rose-pine-moon flavor
-  styles = {
-    transparency = true,       -- DON'T paint Normal's background ->
-                               -- WezTerm's 0.8 opacity + blur shows through
-  },
+-- tokyonight lives in pack/colors/start/, so it's already on the runtimepath
+-- by the time this file runs -- no plugin manager needed. (rose-pine and
+-- catppuccin are installed too; swap them in via :colorscheme to compare.)
+require("tokyonight").setup({
+  style = "storm",                  -- the default tokyonight variant (blue-tinged)
+  transparent = false,              -- paint a SOLID base (#24283b) --
+                                    -- no see-through, no desktop bleeding in
 })
 
-vim.cmd.colorscheme("rose-pine-moon")
+vim.cmd.colorscheme("tokyonight-storm")
 
 -- Telescope: fuzzy finder. Lives in pack/plugins/start/, so it (and its
 -- plenary.nvim dependency) are already on the runtimepath by now.
@@ -87,6 +86,37 @@ vim.keymap.set("n", "<leader>e", "<cmd>Oil --float<cr>", { desc = "Oil: float fi
 require("flash").setup({})
 vim.keymap.set({ "n", "x", "o" }, "s", function() require("flash").jump() end,
   { desc = "Flash: jump to any on-screen match" })
+
+-- bufferline.nvim: shows every open BUFFER as a styled tab across the top, so
+-- you can SEE what you have open instead of guessing. (Buffers are invisible by
+-- default -- which is why you can :bd a few times and be surprised how many
+-- were still open.) Picks up the devicons + tokyonight colours automatically.
+-- Stock default styling.
+require("bufferline").setup({})
+
+-- Recolour just the active-tab accent line ("the blue line") -> storm green.
+-- Both tokyonight and bufferline set BufferLineIndicatorSelected on the
+-- ColorScheme event, so re-apply it there to make sure ours lands last.
+local function green_indicator()
+  vim.api.nvim_set_hl(0, "BufferLineIndicatorSelected", { fg = "#9ece6a" })
+end
+vim.api.nvim_create_autocmd("ColorScheme", { callback = green_indicator })
+green_indicator()
+
+-- Move along the bar in the ORDER SHOWN (not by buffer id). Mirrors your
+-- [d/]d diagnostic jumps. Native H/L (screen top/bottom) are left untouched.
+vim.keymap.set("n", "[b", "<cmd>BufferLineCyclePrev<cr>", { desc = "Buffer: previous" })
+vim.keymap.set("n", "]b", "<cmd>BufferLineCycleNext<cr>", { desc = "Buffer: next" })
+
+-- <leader>1..9 -> jump straight to the Nth tab on the bar (the ordinal number).
+for i = 1, 9 do
+  vim.keymap.set("n", "<leader>" .. i, "<cmd>BufferLineGoToBuffer " .. i .. "<cr>",
+    { desc = "Buffer: go to " .. i })
+end
+
+-- <leader>bd -> close THIS buffer (and its bar entry). Close them one at a time
+-- and watch the count shrink -- the fix for the "how many did I have open?" pile-up.
+vim.keymap.set("n", "<leader>bd", "<cmd>bdelete<cr>", { desc = "Buffer: delete current" })
 
 -- Fugitive: Git inside Neovim. <leader>g opens the git status window
 -- (stage with `s`, unstage with `u`, commit with `cc`). Also `:Git blame`, `:Git log`.

@@ -1,6 +1,6 @@
 # 1. Performance & Display
 font-family = "JetBrainsMono Nerd Font Mono"
-theme = Rose Pine Moon
+theme = TokyoNight Storm
 font-size = 14
 
 # Ensures bold text is rendered brighter for better visibility
@@ -9,8 +9,8 @@ bold-is-bright = true
 macos-titlebar-style = hidden
 window-padding-x = 15
 window-padding-y = 15
-background-opacity = 0.80
-background-blur-radius = 90
+background-opacity = 1.00
+background-blur-radius = 0
 
 confirm-close-surface = always
 shell-integration-features = true
