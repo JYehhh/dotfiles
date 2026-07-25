@@ -21,6 +21,17 @@ vim.g.mapleader = " "
 -- in the buffer (and <Esc> stays safe) until you deliberately accept.
 vim.opt.completeopt = { "menu", "menuone", "noselect", "noinsert" }
 
+-- Indentation: SPACES, 4 wide. Neovim's default is an 8-column tab -- that's
+-- the "too much tabbage" you saw next to VSCode's 4.
+--   expandtab   -> the Tab key inserts spaces, not a literal tab character
+--   shiftwidth  -> width of one indent level (autoindent, >>, and `{`<CR>)
+--   tabstop     -> how many columns a literal tab renders as
+--   softtabstop -> how far Tab / Backspace move in insert mode
+vim.opt.expandtab = true
+vim.opt.shiftwidth = 4
+vim.opt.tabstop = 4
+vim.opt.softtabstop = 4
+
 -- jk / kj to escape -- a home-row alternative to reaching for <Esc>.
 -- INSERT MODE ONLY, on purpose: in visual mode j/k are movement keys, and in
 -- command mode they're just text you're typing, so mapping either there would
@@ -37,6 +48,18 @@ vim.opt.timeoutlen = 300
 -- your own mappings -- it auto-reads the `desc = "..."` labels on the keymaps
 -- further down. Pure Lua, no extra binaries.
 require("which-key").setup()
+
+-- nvim-autopairs: type `{` and get `{}` with the cursor between; typing the
+-- closing `}` when it's already there just steps over it; backspacing the open
+-- bracket deletes both. With map_cr (on by default), pressing <CR> inside a
+-- pair expands it into an indented block -- so in C++ `{` then <Enter> gives:
+--     {
+--         |          <- cursor here, indented
+--     }
+-- (the middle-line indent comes from Neovim's built-in C/C++ indentation).
+-- Pure Lua, no binaries. Your native LSP completion uses <C-y> to accept, not
+-- <CR>, so autopairs owning <CR> doesn't clash with it.
+require("nvim-autopairs").setup({})
 
 -- tokyonight lives in pack/colors/start/, so it's already on the runtimepath
 -- by the time this file runs -- no plugin manager needed. (rose-pine and
@@ -216,31 +239,36 @@ require("lualine").setup({
   extensions = { "oil", "fugitive", "quickfix" },
 })
 
--- noice.nvim: replaces the command line, messages and search UI. The `:` cmdline
--- and `/` search move to a floating box mid-screen; messages route to popups;
--- LSP hover/signature get proper markdown rendering. Needs nui.nvim.
--- Treesitter note: noice wants parsers for full cmdline highlighting. You have
--- vim/lua/markdown/markdown_inline bundled with nvim 0.12, but `regex` and
--- `bash` are missing -- `:checkhealth noice` will flag them. It still works
--- without them (you just lose `/`-search-pattern and terminal highlighting);
--- adding them needs nvim-treesitter, which Santa blocks on your work machine.
-require("noice").setup({
-  lsp = {
-    -- render LSP hover / signature docs as real markdown (you have the parsers)
-    override = {
-      ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
-      ["vim.lsp.util.stylize_markdown"] = true,
-    },
-  },
-  presets = {
-    command_palette = true,        -- cmdline + completion menu grouped together
-    long_message_to_split = true,  -- send long :messages to a split, not a modal
-    lsp_doc_border = true,         -- bordered hover/signature popups
-  },
-  -- snacks.notifier (enabled below) owns vim.notify and renders the toasts, so
-  -- tell noice NOT to also grab vim.notify -- otherwise the two fight over who
-  -- draws notifications. noice still owns the cmdline, search and :messages.
-  notify = { enabled = false },
+-- nvim-hlslens: shows the search count as VIRTUAL TEXT right at the match --
+-- [3/12] travels with you as you press n/N, instead of living in the corner.
+-- This is the one thing noice was kept for; hlslens does only this, so the
+-- cmdline, messages and errors all stay native and bottom-anchored.
+require("hlslens").setup({
+  calm_down = true,       -- clear the highlights once the cursor leaves a match
+  nearest_only = true,    -- only float the count for the NEAREST match, not all
+})
+
+-- Route the search keys through hlslens so it can redraw the counter.
+local hls = { noremap = true, silent = true }
+vim.keymap.set("n", "n",
+  [[<Cmd>execute('normal! ' . v:count1 . 'n')<CR><Cmd>lua require('hlslens').start()<CR>]], hls)
+vim.keymap.set("n", "N",
+  [[<Cmd>execute('normal! ' . v:count1 . 'N')<CR><Cmd>lua require('hlslens').start()<CR>]], hls)
+vim.keymap.set("n", "*",  [[*<Cmd>lua require('hlslens').start()<CR>]],  hls)
+vim.keymap.set("n", "#",  [[#<Cmd>lua require('hlslens').start()<CR>]],  hls)
+vim.keymap.set("n", "g*", [[g*<Cmd>lua require('hlslens').start()<CR>]], hls)
+vim.keymap.set("n", "g#", [[g#<Cmd>lua require('hlslens').start()<CR>]], hls)
+
+-- lsp_signature: the parameter-hint popup while you're typing a call, e.g.
+-- `is_attacked(` shows (Square sq, Colour by). Neovim has the LSP request built
+-- in (vim.lsp.buf.signature_help) but does NOT auto-trigger it; this does.
+-- It auto-closes when you leave insert mode or move off the call -- and
+-- <C-k> in insert mode toggles it off if it's ever in the way.
+require("lsp_signature").setup({
+  hint_enable = false,        -- no inline virtual-text hint; just the popup
+  floating_window = true,
+  toggle_key = "<C-k>",       -- insert-mode toggle
+  handler_opts = { border = "rounded" },
 })
 
 -- Fugitive: Git inside Neovim. <leader>g opens the git status window
@@ -258,8 +286,8 @@ vim.keymap.set("n", "<leader>g", "<cmd>Git<cr>", { desc = "Fugitive: git status"
 require("snacks").setup({
   -- notifier: stacked, coloured, auto-dismissing toast notifications in the
   -- top-right, with history. Takes over vim.notify -- so every plugin's
-  -- messages, and your own vim.notify() calls, land here as toasts. (noice is
-  -- told above not to fight it for vim.notify.) <leader>n opens the history.
+  -- messages, and your own vim.notify() calls, land here as toasts.
+  -- <leader>n opens the history.
   notifier = { enabled = true, timeout = 3000 },
 
   -- scroll: animate the viewport instead of teleporting it. Applies to

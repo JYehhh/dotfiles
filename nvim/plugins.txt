@@ -23,8 +23,9 @@ plugins  https://github.com/nvim-tree/nvim-web-devicons
 plugins  https://github.com/akinsho/bufferline.nvim
 plugins  https://github.com/nvim-lualine/lualine.nvim
 plugins  https://github.com/SmiteshP/nvim-navic
-plugins  https://github.com/folke/noice.nvim
-plugins  https://github.com/MunifTanjim/nui.nvim
+plugins  https://github.com/windwp/nvim-autopairs
+plugins  https://github.com/kevinhwang91/nvim-hlslens
+plugins  https://github.com/ray-x/lsp_signature.nvim
 colors   https://github.com/rose-pine/neovim            rose-pine
 colors   https://github.com/folke/tokyonight.nvim
 colors   https://github.com/catppuccin/nvim              catppuccin
