@@ -21,6 +21,17 @@ vim.g.mapleader = " "
 -- in the buffer (and <Esc> stays safe) until you deliberately accept.
 vim.opt.completeopt = { "menu", "menuone", "noselect", "noinsert" }
 
+-- jk / kj to escape -- a home-row alternative to reaching for <Esc>.
+-- INSERT MODE ONLY, on purpose: in visual mode j/k are movement keys, and in
+-- command mode they're just text you're typing, so mapping either there would
+-- break more than it helps. (You also already have Caps->Ctrl, so Caps+[ = Esc.)
+vim.keymap.set("i", "jk", "<Esc>", { desc = "Escape insert mode" })
+vim.keymap.set("i", "kj", "<Esc>", { desc = "Escape insert mode" })
+-- Shorter mapping timeout so the brief wait after a trailing "j" isn't annoying.
+-- Also shortens the which-key popup delay and the window for leader chords --
+-- 300ms is a common balance; raise it if <leader> sequences start feeling rushed.
+vim.opt.timeoutlen = 300
+
 -- which-key: after you press a prefix (like <leader> == Space) and PAUSE, a
 -- popup lists every key you can press next and what it does. Great for learning
 -- your own mappings -- it auto-reads the `desc = "..."` labels on the keymaps
@@ -205,6 +216,33 @@ require("lualine").setup({
   extensions = { "oil", "fugitive", "quickfix" },
 })
 
+-- noice.nvim: replaces the command line, messages and search UI. The `:` cmdline
+-- and `/` search move to a floating box mid-screen; messages route to popups;
+-- LSP hover/signature get proper markdown rendering. Needs nui.nvim.
+-- Treesitter note: noice wants parsers for full cmdline highlighting. You have
+-- vim/lua/markdown/markdown_inline bundled with nvim 0.12, but `regex` and
+-- `bash` are missing -- `:checkhealth noice` will flag them. It still works
+-- without them (you just lose `/`-search-pattern and terminal highlighting);
+-- adding them needs nvim-treesitter, which Santa blocks on your work machine.
+require("noice").setup({
+  lsp = {
+    -- render LSP hover / signature docs as real markdown (you have the parsers)
+    override = {
+      ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
+      ["vim.lsp.util.stylize_markdown"] = true,
+    },
+  },
+  presets = {
+    command_palette = true,        -- cmdline + completion menu grouped together
+    long_message_to_split = true,  -- send long :messages to a split, not a modal
+    lsp_doc_border = true,         -- bordered hover/signature popups
+  },
+  -- snacks.notifier (enabled below) owns vim.notify and renders the toasts, so
+  -- tell noice NOT to also grab vim.notify -- otherwise the two fight over who
+  -- draws notifications. noice still owns the cmdline, search and :messages.
+  notify = { enabled = false },
+})
+
 -- Fugitive: Git inside Neovim. <leader>g opens the git status window
 -- (stage with `s`, unstage with `u`, commit with `cc`). Also `:Git blame`, `:Git log`.
 vim.keymap.set("n", "<leader>g", "<cmd>Git<cr>", { desc = "Fugitive: git status" })
@@ -218,6 +256,12 @@ vim.keymap.set("n", "<leader>g", "<cmd>Git<cr>", { desc = "Fugitive: git status"
 -- OFF until you name it here -- which is why installing it appeared to do
 -- nothing. It's in plugins.txt because claudecode needs its popup terminal.
 require("snacks").setup({
+  -- notifier: stacked, coloured, auto-dismissing toast notifications in the
+  -- top-right, with history. Takes over vim.notify -- so every plugin's
+  -- messages, and your own vim.notify() calls, land here as toasts. (noice is
+  -- told above not to fight it for vim.notify.) <leader>n opens the history.
+  notifier = { enabled = true, timeout = 3000 },
+
   -- scroll: animate the viewport instead of teleporting it. Applies to
   -- <C-u>/<C-d>, <C-f>/<C-b>, zz/zt/zb, gg/G, and search jumps (n/N) -- so
   -- your eye tracks where the text went rather than re-finding its place.
@@ -237,6 +281,12 @@ require("snacks").setup({
     animate_repeat = { delay = 100, duration = { step = 3, total = 40 } },
   },
 })
+
+-- <leader>n -> re-open recent notifications (they auto-dismiss; this brings
+-- back the history in a scrollable float).
+vim.keymap.set("n", "<leader>n", function() require("snacks").notifier.show_history() end,
+  { desc = "Notifications: history" })
+
 require("claudecode").setup({})   -- defaults: connects to `claude` found on PATH
 
 --   <leader>a  == Space then a  -> toggle the Claude Code session
