@@ -43,6 +43,15 @@ vim.keymap.set("i", "kj", "<Esc>", { desc = "Escape insert mode" })
 -- 300ms is a common balance; raise it if <leader> sequences start feeling rushed.
 vim.opt.timeoutlen = 300
 
+-- System clipboard, on demand. Vim's registers are SEPARATE from the macOS
+-- clipboard by default, which is deliberate: `d`, `c` and `x` are yanks too, so
+-- syncing everything (clipboard = "unnamedplus") means every `dd` overwrites
+-- whatever you copied from your browser. These maps cross the boundary only
+-- when you ask.  `"+y` reads as: into register `+` (the system clipboard), yank.
+vim.keymap.set({ "n", "v" }, "<leader>y", '"+y',  { desc = "Yank to system clipboard" })
+vim.keymap.set("n",          "<leader>Y", '"+Y',  { desc = "Yank line to system clipboard" })
+vim.keymap.set({ "n", "v" }, "<leader>p", '"+p',  { desc = "Paste from system clipboard" })
+
 -- which-key: after you press a prefix (like <leader> == Space) and PAUSE, a
 -- popup lists every key you can press next and what it does. Great for learning
 -- your own mappings -- it auto-reads the `desc = "..."` labels on the keymaps
