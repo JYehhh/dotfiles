@@ -8,6 +8,17 @@ vim.opt.relativenumber = true  -- + relative distances -> current line shows its
                                -- real number, others show how far away they are
                                -- (so `5k`/`3j`, and `d5j`/`y3k`, need no counting)
 
+-- Sign column: ALWAYS visible. The default ("auto") only draws the column when
+-- something occupies it, so the moment gitsigns adds a hunk marker or clangd
+-- adds an error sign, every line of text jumps one column sideways -- and jumps
+-- back when it clears. Pinning it open costs one column and kills the jitter.
+vim.opt.signcolumn = "yes"
+
+-- How long the cursor must sit still (ms) before CursorHold fires. Neovim's
+-- default is 4000 -- far too slow for gitsigns' inline blame, which hangs off
+-- that event. 300ms feels immediate without thrashing.
+vim.opt.updatetime = 300
+
 -- Leader key: the "prefix" pressed before a shortcut. Space, by convention.
 -- Must be set before any <leader> mapping below.
 vim.g.mapleader = " "
@@ -193,7 +204,17 @@ require("lualine").setup({
   -- which is how "progress" kept reappearing. Empty {} is the only real drop.
   sections = {
     lualine_a = { "mode" },                                 -- NORMAL / INSERT / ...
-    lualine_b = { "branch", "diff" },                       -- pure git: branch + this file's +/~/- vs HEAD
+    -- Pure git: branch + this file's +/~/- vs HEAD. `source` points the diff
+    -- counts at gitsigns' already-computed hunks instead of lualine shelling out
+    -- to `git diff` on a timer -- same numbers, no subprocess, and it can never
+    -- disagree with the signs in the gutter.
+    lualine_b = {
+      "branch",
+      { "diff", source = function()
+          local gs = vim.b.gitsigns_status_dict
+          return gs and { added = gs.added, modified = gs.changed, removed = gs.removed } or nil
+        end },
+    },
     lualine_c = {
       { "filename", path = 1 },                             -- path = 1 -> relative path
       -- navic breadcrumb -- left-aligned by the filename because it reads as a
@@ -283,6 +304,93 @@ require("lsp_signature").setup({
 -- Fugitive: Git inside Neovim. <leader>g opens the git status window
 -- (stage with `s`, unstage with `u`, commit with `cc`). Also `:Git blame`, `:Git log`.
 vim.keymap.set("n", "<leader>g", "<cmd>Git<cr>", { desc = "Fugitive: git status" })
+
+-- gitsigns: the VSCode gutter. Coloured marks in the sign column showing which
+-- lines you've added / changed / deleted RELATIVE TO HEAD (not relative to the
+-- remote -- it clears the moment you commit, even though you've just moved
+-- further from origin). Fugitive above is the DELIBERATE half of git (sit down,
+-- read the whole diff, commit); gitsigns is the AMBIENT half -- always-on
+-- peripheral awareness plus hunk-level surgery without leaving the buffer.
+require("gitsigns").setup({
+  signs = {
+    add          = { text = "│" },   -- solid bar: these lines are new
+    change       = { text = "│" },
+    delete       = { text = "_" },   -- something was removed BELOW this line
+    topdelete    = { text = "‾" },   -- removed ABOVE the first line
+    changedelete = { text = "~" },   -- changed AND had lines removed
+    untracked    = { text = "┆" },   -- dashed: file isn't in git at all yet
+  },
+  -- Virtual text at the end of the current line: "Jyeh, 2 hours ago - fix eval".
+  -- OFF by default because it's noisy while you type; <leader>hb toggles it on
+  -- for when you're reading unfamiliar code and want continuous authorship.
+  current_line_blame = false,
+  current_line_blame_opts = { delay = 300, virt_text_pos = "eol" },
+
+  -- Keymaps are declared HERE rather than at the top level because gitsigns
+  -- attaches per-buffer -- these only exist in buffers that are actually inside
+  -- a git repo, so `]c` still does its native thing everywhere else.
+  on_attach = function(bufnr)
+    local gs = require("gitsigns")
+    local function map(mode, l, r, desc)
+      vim.keymap.set(mode, l, r, { buffer = bufnr, desc = desc })
+    end
+
+    -- NAVIGATION. ]c / [c are vim's built-in "next/prev change in diff mode";
+    -- gitsigns reuses the same keys outside diff mode, which is why they feel
+    -- native. This is the underrated half: your own edits become an index you
+    -- can tab through after coming back to a file cold.
+    map("n", "]c", function() gs.nav_hunk("next") end, "Next git hunk")
+    map("n", "[c", function() gs.nav_hunk("prev") end, "Previous git hunk")
+
+    -- INSPECT.
+    map("n", "<leader>hp", gs.preview_hunk,      "Preview hunk (float)")
+    map("n", "<leader>hd", gs.diffthis,          "Diff this file vs index")
+    map("n", "<leader>hD", function() gs.diffthis("~") end, "Diff this file vs HEAD~")
+    map("n", "<leader>hb", function() gs.blame_line({ full = true }) end, "Blame line")
+    map("n", "<leader>hB", gs.toggle_current_line_blame, "Toggle inline blame")
+
+    -- STAGE / RESET. The real payoff: stage ONE hunk out of a messy file so
+    -- atomic commits stop being a chore (this is `git add -p` without the TUI).
+    -- In visual mode the same keys act on exactly the lines you've selected --
+    -- finer than a hunk. <leader>hu undoes the last stage; <leader>hr throws
+    -- the hunk away entirely (destructive -- it reverts to HEAD).
+    map("n", "<leader>hs", gs.stage_hunk,  "Stage hunk")
+    map("n", "<leader>hr", gs.reset_hunk,  "Reset hunk (discard)")
+    map("v", "<leader>hs", function() gs.stage_hunk({ vim.fn.line("."), vim.fn.line("v") }) end, "Stage selected lines")
+    map("v", "<leader>hr", function() gs.reset_hunk({ vim.fn.line("."), vim.fn.line("v") }) end, "Reset selected lines")
+    map("n", "<leader>hu", gs.undo_stage_hunk, "Undo stage hunk")
+    map("n", "<leader>hS", gs.stage_buffer, "Stage whole buffer")
+
+    -- TEXT OBJECT: `ih` = "inner hunk". So `dih` deletes the hunk under the
+    -- cursor, `vih` selects it, `yih` yanks it. Works like `iw`/`ip`.
+    map({ "o", "x" }, "ih", gs.select_hunk, "Select hunk")
+  end,
+})
+
+-- Gutter colours, straight from the TokyoNight Storm palette. gitsigns' own
+-- defaults link to the colourscheme's diff groups, which in Storm come out
+-- as three similar washed-out shades -- hard to read at a glance. These are
+-- the saturated palette colours instead, so the three states are distinct in
+-- peripheral vision without having to look directly at the column.
+--
+-- This has to run on ColorScheme, not just once: tokyonight DEFINES the
+-- GitSigns* groups when it loads, so anything set beforehand gets clobbered
+-- (the same trap as BufferLineIndicatorSelected further up).
+local function gitsigns_colors()
+  local hl = {
+    GitSignsAdd          = "#9ece6a",  -- green  -- new lines
+    GitSignsChange       = "#7aa2f7",  -- blue   -- modified lines
+    GitSignsDelete       = "#f7768e",  -- red    -- lines removed below
+    GitSignsTopdelete    = "#f7768e",  -- red    -- lines removed above line 1
+    GitSignsChangedelete = "#ff9e64",  -- orange -- changed AND shrank: its own state
+    GitSignsUntracked    = "#565f89",  -- grey   -- not in git yet; deliberately quiet
+  }
+  for group, fg in pairs(hl) do
+    vim.api.nvim_set_hl(0, group, { fg = fg })
+  end
+end
+vim.api.nvim_create_autocmd("ColorScheme", { callback = gitsigns_colors })
+gitsigns_colors()
 
 -- Claude Code: bridges THIS Neovim to the `claude` CLI (same protocol the
 -- official VS Code / JetBrains extensions use). Claude's edits arrive as a
