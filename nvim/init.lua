@@ -468,8 +468,129 @@ vim.lsp.config("clangd", {
   root_markers = { "compile_commands.json", ".clangd", ".git" },
 })
 
--- Turn the three servers on.
+-- Java  (server: jdtls, the Eclipse JDT Language Server)
+-- Unlike the three above there's no binary to install: jdtls is a pile of JARs
+-- that install.sh unpacks into ~/.local/share/jdtls, launched by `java -jar`.
+-- We invoke the launcher JAR directly rather than jdtls' own wrapper script --
+-- one less moving part, and it keeps `java` (already approved) the only
+-- executable in the chain, so Santa has no new binary to judge.
+local jdtls_home = vim.env.JDTLS_HOME or (vim.env.HOME .. "/.local/share/jdtls")
+
+-- The launcher JAR has a version-stamped filename that changes every release,
+-- so glob for it instead of hardcoding. Equinox also needs a platform config
+-- directory; jdtls ships one per OS/arch and picking the wrong one fails at
+-- startup with an unhelpful OSGi error.
+local jdtls_launcher = vim.fn.glob(jdtls_home .. "/plugins/org.eclipse.equinox.launcher_*.jar", true, true)[1]
+local jdtls_config = (function()
+  local arm = vim.uv.os_uname().machine == "arm64"
+  for _, dir in ipairs(arm and { "config_mac_arm", "config_mac" } or { "config_mac" }) do
+    if vim.fn.isdirectory(jdtls_home .. "/" .. dir) == 1 then return jdtls_home .. "/" .. dir end
+  end
+end)()
+
+-- ROOT DETECTION. This is the load-bearing part for Java, because the marker
+-- files are not unique to the project root the way compile_commands.json is:
+--
+--   Gradle: settings.gradle exists ONLY at the root -- nearest match is right.
+--   Maven:  EVERY module has a pom.xml. "Nearest ancestor with a pom.xml" finds
+--           the module you're in, not the aggregator above it -- so jdtls sees
+--           one module, treats its siblings as unresolved external jars, and
+--           cross-module `gr`/`gd` silently return wrong answers.
+--
+-- So for Maven we walk UP while each parent still has a pom.xml and take the
+-- OUTERMOST one. The walk stops at a directory without a pom (multi-module
+-- poms are contiguous) and never escapes the git root, so a stray pom.xml
+-- somewhere in ~ can't drag the workspace up with it.
+--
+-- If your work repo nests modules under a non-Maven directory, this is the
+-- knob to turn: relax the contiguity check, or just hardcode the root.
+local function java_root(fname)
+  local start = vim.fs.dirname(fname)
+  local git_root = vim.fs.dirname(vim.fs.find(".git", { path = start, upward = true })[1] or "")
+
+  local gradle = vim.fs.find({ "settings.gradle", "settings.gradle.kts" }, { path = start, upward = true })[1]
+  if gradle then return vim.fs.dirname(gradle) end
+
+  local outermost = nil
+  local dir = start
+  while dir and dir ~= "/" do
+    if vim.fn.filereadable(dir .. "/pom.xml") == 1 then
+      outermost = dir
+    elseif outermost then
+      break                        -- chain broke: the last pom we saw is the root
+    end
+    if dir == git_root then break end   -- never climb out of the repo
+    dir = vim.fs.dirname(dir)
+  end
+  return outermost or (git_root ~= "" and git_root or nil)
+end
+
+vim.lsp.config("jdtls", {
+  filetypes = { "java" },
+  -- Neovim calls root_dir as (bufnr, on_dir) and expects the answer via the
+  -- callback -- NOT as a return value, and NOT given a filename. Calling on_dir
+  -- is also what activates the client at all: skip it and the server silently
+  -- never starts. java_root() above stays a plain fname->path function so it
+  -- can be reasoned about (and tested) on its own; this just adapts it.
+  root_dir = function(bufnr, on_dir)
+    on_dir(java_root(vim.api.nvim_buf_get_name(bufnr)))
+  end,
+  cmd = function(dispatchers, config)
+    -- -data is jdtls' per-project index. It lives OUTSIDE the project (keyed by
+    -- root path) because it's hundreds of MB of churning Eclipse state -- so
+    -- there's nothing to gitignore, and two projects can't corrupt each other.
+    local root = config.root_dir or vim.fn.getcwd()
+    local workspace = vim.fn.stdpath("cache") .. "/jdtls/" .. vim.fn.fnamemodify(root, ":p:h:t")
+
+    -- jdtls itself needs a JDK 21+ to RUN. That is INDEPENDENT of what your
+    -- projects target -- a 21 JVM happily builds a Java 17 project. If the
+    -- `java` on PATH is older, point JAVA_HOME_FOR_JDTLS at a 21 JDK.
+    local java = vim.env.JAVA_HOME_FOR_JDTLS
+      and (vim.env.JAVA_HOME_FOR_JDTLS .. "/bin/java") or "java"
+
+    return vim.lsp.rpc.start({
+      java,
+      "-Declipse.application=org.eclipse.jdt.ls.core.id1",
+      "-Dosgi.bundles.defaultStartLevel=4",
+      "-Declipse.product=org.eclipse.jdt.ls.core.product",
+      "-Dlog.level=WARNING",
+      "-Xmx2G",                                   -- jdtls is memory-hungry on big repos
+      "--add-modules=ALL-SYSTEM",
+      "--add-opens", "java.base/java.util=ALL-UNNAMED",
+      "--add-opens", "java.base/java.lang=ALL-UNNAMED",
+      "-jar", jdtls_launcher,
+      "-configuration", jdtls_config,
+      "-data", workspace,
+    }, dispatchers)
+  end,
+  settings = {
+    java = {
+      configuration = {
+        -- THE ONE MACHINE-SPECIFIC KNOB. These names are Eclipse execution
+        -- environment IDs and must match exactly ("JavaSE-21", not "21").
+        -- jdtls picks per project from what the build file declares and falls
+        -- back to `default`. Fill in the real paths at work --
+        -- `/usr/libexec/java_home -V` lists what's installed.
+        runtimes = {
+          -- { name = "JavaSE-21", path = "/path/to/jdk-21", default = true },
+          -- { name = "JavaSE-17", path = "/path/to/jdk-17" },
+        },
+      },
+      -- Keep imports tidy without a plugin: sort, and don't collapse to `.*`.
+      completion = { importOrder = { "java", "javax", "com", "org" } },
+      sources = { organizeImports = { starThreshold = 99, staticStarThreshold = 99 } },
+      format = { enabled = true },
+    },
+  },
+})
+
+-- Turn the servers on. jdtls only if it's actually unpacked on this machine --
+-- otherwise opening a .java file would throw on every buffer. This is what
+-- lets the same init.lua ride to a machine that hasn't run install.sh yet.
 vim.lsp.enable({ "lua_ls", "pyright", "clangd" })
+if jdtls_launcher and jdtls_config then
+  vim.lsp.enable({ "jdtls" })
+end
 
 -- When a server attaches to a buffer, wire up the useful keymaps + autocomplete.
 vim.api.nvim_create_autocmd("LspAttach", {
