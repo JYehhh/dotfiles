@@ -488,22 +488,29 @@ local jdtls_config = (function()
   end
 end)()
 
--- ROOT DETECTION. This is the load-bearing part for Java, because the marker
--- files are not unique to the project root the way compile_commands.json is:
+-- ROOT DETECTION. Load-bearing for Java, because the marker files aren't
+-- unique to the project root the way compile_commands.json is.
 --
---   Gradle: settings.gradle exists ONLY at the root -- nearest match is right.
---   Maven:  EVERY module has a pom.xml. "Nearest ancestor with a pom.xml" finds
---           the module you're in, not the aggregator above it -- so jdtls sees
---           one module, treats its siblings as unresolved external jars, and
---           cross-module `gr`/`gd` silently return wrong answers.
+-- THE NORMAL CASE HERE is microservices: a plain parent folder with each
+-- service cloned into it, one pom.xml per service, and each one indexed in
+-- ISOLATION. Two things keep the walk inside a single service -- it stops at
+-- the git root (each clone has its own .git), and it stops at the first
+-- directory with no pom.xml, which the parent folder is. So a service never
+-- absorbs its siblings even if the parent folder isn't a repo at all.
 --
--- So for Maven we walk UP while each parent still has a pom.xml and take the
--- OUTERMOST one. The walk stops at a directory without a pom (multi-module
--- poms are contiguous) and never escapes the git root, so a stray pom.xml
--- somewhere in ~ can't drag the workspace up with it.
+-- The outermost-pom walk below is for the OTHER Maven layout: a multi-module
+-- build (an aggregator pom with <modules>, as in a layered monolith or a
+-- library shipping several artifacts) where EVERY module has its own pom.
+-- There, "nearest ancestor with a pom.xml" finds the module you're in rather
+-- than the aggregator above it -- jdtls sees one module, treats its siblings
+-- as unresolved external jars, and cross-module `gr`/`gd` quietly return
+-- wrong answers. Walking up while the pom chain stays contiguous fixes it.
 --
--- If your work repo nests modules under a non-Maven directory, this is the
--- knob to turn: relax the contiguity check, or just hardcode the root.
+-- Note <parent> in a pom is NOT this: that's inheritance from an artifact
+-- resolved out of Nexus/Central (spring-boot-starter-parent, a corporate
+-- parent), not a directory. Only <modules> means dirs on disk.
+--
+-- Gradle needs none of this: settings.gradle exists only at the root.
 local function java_root(fname)
   local start = vim.fs.dirname(fname)
   local git_root = vim.fs.dirname(vim.fs.find(".git", { path = start, upward = true })[1] or "")
