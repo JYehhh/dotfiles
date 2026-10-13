@@ -440,6 +440,78 @@ vim.keymap.set("n", "<leader>a", "<cmd>ClaudeCode<cr>", { desc = "Claude Code: t
 vim.keymap.set("v", "<leader>a", "<cmd>ClaudeCodeSend<cr>", { desc = "Claude Code: send selection" })
 
 -- ---------------------------------------------------------------------------
+-- Treesitter: a real PARSER for source code, as opposed to the regex guesswork
+-- Vim has always used for syntax highlighting. It keeps a live parse tree of
+-- the buffer, so things like "the body of this function" are structural facts
+-- rather than brace-counting heuristics.
+--
+-- It's here for ONE reason: leetcode.nvim renders problem descriptions, which
+-- arrive from LeetCode as HTML, and it needs the `html` grammar to turn those
+-- tags into styled text. Highlighting for the languages you actually write is
+-- left OFF -- see the note at the bottom of this block.
+--
+-- Grammars are per-language and compiled to a .so on this machine (hence the
+-- C compiler and tree-sitter-cli in brew.txt). This is exactly the step that
+-- fails on the locked-down work laptop, which is why nothing load-bearing
+-- depends on it: if the parser is missing, descriptions still render, just
+-- without the styling.
+-- ---------------------------------------------------------------------------
+require("nvim-treesitter").setup({})
+
+-- ---------------------------------------------------------------------------
+-- leetcode.nvim: browse, solve, test and submit LeetCode problems in here.
+-- There is no official LeetCode API -- the plugin drives the same private
+-- GraphQL endpoint the website itself uses, authenticating by replaying your
+-- browser session cookie (`:Leet cookie update`, see cheatsheet.md).
+--
+-- `arg` is the trick that makes this safe to always-load: the dashboard only
+-- takes over when nvim is started as EXACTLY `nvim leetcode.nvim`. Open any
+-- real file and this plugin stays completely out of the way -- which matters
+-- because pack/start has no lazy-loading to fall back on.
+-- ---------------------------------------------------------------------------
+require("leetcode").setup({
+  arg = "leetcode.nvim",
+  lang = "cpp",                        -- starting language; `:Leet lang` switches
+  picker = { provider = "telescope" }, -- reuse the picker you already know
+  description = { position = "left", width = "40%" },
+
+  -- Boilerplate pasted above the solution stub so you're not retyping headers
+  -- on every problem. LeetCode compiles what's in the buffer, so this has to
+  -- be real code, not a comment.
+  injector = {
+    ["cpp"] = {
+      before = { "#include <bits/stdc++.h>", "using namespace std;" },
+    },
+    ["python3"] = {
+      before = "from typing import List, Optional",
+    },
+    ["java"] = {
+      before = "import java.util.*;",
+    },
+  },
+})
+
+-- Treesitter HIGHLIGHTING is opt-in per filetype: the plugin no longer turns it
+-- on for you, you call vim.treesitter.start() yourself. Highlighting from a real
+-- parse tree beats Vim's regex syntax on exactly the cases regexes get wrong --
+-- nested templates, raw strings, `>` as comparison vs. end-of-generic.
+--
+-- The pcall is what makes this config portable. start() THROWS when the grammar
+-- for that filetype isn't built, so on the work laptop (no tree-sitter CLI, see
+-- install.sh) every entry below simply no-ops and you keep the old regex
+-- highlighting. Same init.lua, no machine detection, no error on startup.
+--
+-- `c` and `lua` are free everywhere -- Neovim ships those grammars. `cpp` is
+-- the one that needs parsers.txt, so it's live here and inert at work.
+for _, ft in ipairs({ "c", "cpp", "lua" }) do
+  vim.api.nvim_create_autocmd("FileType", {
+    pattern = ft,
+    callback = function() pcall(vim.treesitter.start) end,
+    desc = "Treesitter highlighting (no-op if the grammar isn't installed)",
+  })
+end
+
+-- ---------------------------------------------------------------------------
 -- LSP: language "smarts" (autocomplete, errors, go-to-definition).
 -- Uses Neovim 0.11+'s BUILT-IN LSP client -- no plugin needed. Each server is
 -- a separate program (installed on PATH) that Neovim talks to per language.
@@ -608,8 +680,9 @@ vim.api.nvim_create_autocmd("LspAttach", {
     vim.keymap.set("n", "K",  vim.lsp.buf.hover,          opts)  -- docs popup
     vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, opts)  -- rename symbol
     vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action, opts) -- fixes/actions
-    vim.keymap.set("n", "[d", vim.diagnostic.goto_prev,  opts)  -- prev error
-    vim.keymap.set("n", "]d", vim.diagnostic.goto_next,  opts)  -- next error
+    vim.keymap.set("n", "[d", vim.diagnostic.goto_prev,   opts)  -- prev error
+    vim.keymap.set("n", "]d", vim.diagnostic.goto_next,   opts)  -- next error
+    vim.keymap.set("n", "<leader>d", vim.diagnostic.open_float, opts)  -- show current diagnostic
 
     -- Auto-completion as you type (built-in; press <C-y> to accept a suggestion).
     local client = vim.lsp.get_client_by_id(args.data.client_id)

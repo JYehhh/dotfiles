@@ -80,4 +80,23 @@ while read -r group url name _; do
   fi
 done < "$DOTFILES/nvim/plugins.txt"
 
+echo "==> Compiling Treesitter grammars (from nvim/parsers.txt)"
+# Guarded exactly like Homebrew above, and for the same machine: building a
+# grammar needs the tree-sitter CLI (a brew formula) plus a C compiler, and the
+# work laptop has neither a package manager to get the CLI nor an appetite for
+# loading the freshly-built .so. Skipping is harmless -- Neovim's seven builtin
+# grammars still work, and init.lua enables highlighting only where the grammar
+# actually exists, so the same config runs fine on both machines.
+if command -v tree-sitter >/dev/null 2>&1; then
+  # Turn the manifest into a Lua list literal:  html\ncpp  ->  "html","cpp"
+  parsers=$(read_list "$DOTFILES/nvim/parsers.txt" | sed 's/.*/"&"/' | paste -sd, -)
+  if [ -n "$parsers" ]; then
+    # install() skips any grammar already built, so this is safe to re-run.
+    nvim --headless -c "lua require('nvim-treesitter').install({$parsers}):wait(300000)" -c 'qa'
+  fi
+else
+  echo "  - no tree-sitter CLI on this machine, skipping"
+  echo "    (highlighting falls back to Vim's regex syntax; nothing breaks)"
+fi
+
 echo "==> Done."

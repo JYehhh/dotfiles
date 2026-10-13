@@ -27,6 +27,9 @@ plugins  https://github.com/SmiteshP/nvim-navic
 plugins  https://github.com/windwp/nvim-autopairs
 plugins  https://github.com/kevinhwang91/nvim-hlslens
 plugins  https://github.com/ray-x/lsp_signature.nvim
+plugins  https://github.com/nvim-treesitter/nvim-treesitter
+plugins  https://github.com/MunifTanjim/nui.nvim
+plugins  https://github.com/kawre/leetcode.nvim
 colors   https://github.com/rose-pine/neovim            rose-pine
 colors   https://github.com/folke/tokyonight.nvim
 colors   https://github.com/catppuccin/nvim              catppuccin

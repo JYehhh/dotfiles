@@ -1,0 +1,18 @@
+# Treesitter grammars to compile on this machine. One per line.
+# Blank lines and lines starting with # are ignored.
+#
+# A grammar is a per-language parser, built from C source into a .so by the
+# tree-sitter CLI. Neovim already SHIPS seven of them (c, lua, markdown,
+# markdown_inline, query, vim, vimdoc) -- those work everywhere, for free, and
+# must NOT be listed here. This file is only for the extra ones.
+#
+# install.sh skips this whole step when the tree-sitter CLI is absent, which is
+# the normal case on the locked-down work laptop (no Homebrew to install it,
+# and it couldn't run the compiled result anyway). Nothing here is load-bearing:
+# without these, highlighting silently falls back to Vim's regex syntax and
+# LeetCode problem descriptions render unstyled.
+
+# leetcode.nvim parses problem descriptions, which arrive as HTML
+html
+# syntax highlighting for local C++ work
+cpp

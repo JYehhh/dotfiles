@@ -5,3 +5,6 @@ fd
 lua-language-server
 tmux
 neovim
+# Parser generator. nvim-treesitter's main branch shells out to this to build
+# grammars, and specifically wants the Homebrew build, not the npm one.
+tree-sitter-cli

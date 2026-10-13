@@ -206,3 +206,41 @@ Each slot, left to right:
 - `Space ca`     code action (quick fixes)
 
 
+
+
+# ═════════════════════════════  LEETCODE  ═════════════════════════════
+# Solve LeetCode without leaving nvim. Start it with:  nvim leetcode.nvim
+# (that exact argument is the trigger -- opening a normal file does nothing)
+
+## First-time sign-in  (cookie, ~30 days, redo when it expires)
+- Log into leetcode.com in Chrome
+- DevTools (Cmd+Opt+I) -> Network tab -> reload -> click any leetcode.com request
+- Under "Request Headers", copy the whole `Cookie:` value
+  (the REQUEST `Cookie`, NOT the `set-cookie` in the response)
+- `:Leet cookie update`   then paste
+- `:Leet cookie delete`   sign out
+
+## Picking a problem
+- `:Leet`             dashboard
+- `:Leet daily`       today's daily problem
+- `:Leet random`      random problem
+- `:Leet list`        browse/filter all problems (telescope)
+- `:Leet cache update` refresh the problem database
+
+## Solving
+- `:Leet run`         run against the sample testcases
+- `:Leet submit`      submit for real
+- `:Leet lang`        switch language (resets the buffer to that stub)
+- `:Leet reset`       throw away your code, back to the default stub
+- `:Leet last_submit` pull back your previous submission
+- `:Leet desc`        toggle the description pane
+- `:Leet info`        constraints / hints / stats popup
+- `:Leet open`        open this problem in the browser
+- `:Leet tabs`        list open problem tabs
+- `:Leet exit`        close the plugin
+
+## Inside the console  (the run/submit results window)
+- `q`            close it
+- `H` / `L`      focus testcases / focus result
+- `r`            reset testcases
+- `U`            use the testcase under the cursor
