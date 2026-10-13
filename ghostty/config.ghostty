@@ -3,8 +3,15 @@ font-family = "JetBrainsMono Nerd Font Mono"
 theme = TokyoNight Storm
 font-size = 14
 
-# Ensures bold text is rendered brighter for better visibility
-bold-is-bright = true
+# `bold-is-bright` only swaps an already-coloured glyph for its bright variant,
+# so bold text drawn in the DEFAULT foreground had no brighter version to swap
+# to and stayed the same colour. Naming an explicit colour is the form that
+# applies to default-foreground bold, which is what TUIs use for headings.
+bold-color = #e0af68
+font-style-bold = ExtraBold
+
+# Line spacing. Helps the eye find the start of the next line on long lines.
+adjust-cell-height = 12%
 
 macos-titlebar-style = hidden
 window-padding-x = 15

@@ -1,0 +1,34 @@
+{
+  "name": "prismantis-skins-helper",
+  "version": "0.1.0",
+  "description": "Vertical breathing room around transcript elements, and never collapse tool groups. Wraps prismantis and skins rather than replacing them.",
+  "author": { "name": "jyeh4" },
+  "license": "MIT",
+  "keywords": ["claude-code-mods", "function-hooks", "spacing", "layout"],
+  "userConfig": {
+    "replyGap": {
+      "type": "boolean",
+      "title": "Gap above replies",
+      "description": "A blank line above the start of each reply, so it is not flush against your prompt or the last tool row.",
+      "default": true
+    },
+    "durationGap": {
+      "type": "boolean",
+      "title": "Gap above the duration line",
+      "description": "A blank line above the \"Cooked for 12s\" line at the end of a turn.",
+      "default": true
+    },
+    "spinnerGap": {
+      "type": "boolean",
+      "title": "Gap above the spinner",
+      "description": "A blank line above the working spinner, so it is not flush against the text above it.",
+      "default": true
+    },
+    "expandToolGroups": {
+      "type": "boolean",
+      "title": "Never collapse tool groups",
+      "description": "Every tool call draws as its own row. Without this, skins replaces a batch with a tally like \"Run 3\" and hides the commands.",
+      "default": true
+    }
+  }
+}

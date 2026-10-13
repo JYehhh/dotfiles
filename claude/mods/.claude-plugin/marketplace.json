@@ -1,0 +1,9 @@
+{
+  "name": "jyeh4-mods",
+  "description": "jyeh4's own Claude Code mods.",
+  "owner": { "name": "jyeh4" },
+  "plugins": [
+    { "name": "prismantis-skins-helper", "source": "./prismantis-skins-helper",
+      "description": "Vertical spacing around transcript elements, and never collapse tool groups." }
+  ]
+}

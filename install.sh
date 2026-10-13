@@ -19,6 +19,18 @@ GHOSTTY_DIR="$HOME/Library/Application Support/com.mitchellh.ghostty"
 mkdir -p "$GHOSTTY_DIR"
 ln -sf "$DOTFILES/ghostty/config.ghostty" "$GHOSTTY_DIR/config.ghostty"
 
+echo "==> Linking Claude Code config"
+# An existing real file is moved aside rather than overwritten, so a machine's
+# own settings are recoverable. See claude/SETTINGS.md for what doesn't travel.
+mkdir -p "$HOME/.claude"
+for f in settings.json CLAUDE.md writing-style.md; do
+  target="$HOME/.claude/$f"
+  if [ -e "$target" ] && [ ! -L "$target" ]; then
+    mv "$target" "$target.pre-dotfiles.bak"
+  fi
+  ln -sf "$DOTFILES/claude/$f" "$target"
+done
+
 echo "==> Installing Homebrew formulae (from brew.txt)"
 # Guarded: a locked-down work machine may have no Homebrew at all, and with
 # `set -e` an unguarded `brew` would abort the whole install before the config
