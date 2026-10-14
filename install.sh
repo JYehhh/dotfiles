@@ -23,7 +23,7 @@ echo "==> Linking Claude Code config"
 # An existing real file is moved aside rather than overwritten, so a machine's
 # own settings are recoverable. See claude/SETTINGS.md for what doesn't travel.
 mkdir -p "$HOME/.claude"
-for f in settings.json CLAUDE.md writing-style.md; do
+for f in settings.json CLAUDE.md writing-style.md statusline-command.sh; do
   target="$HOME/.claude/$f"
   if [ -e "$target" ] && [ ! -L "$target" ]; then
     mv "$target" "$target.pre-dotfiles.bak"

@@ -13,6 +13,7 @@ Last updated 2026-10-13.
 | `settings.json` | `~/.claude/settings.json` | Model, verbose, hooks, permissions, plugin list, prismantis options |
 | `CLAUDE.md` | `~/.claude/CLAUDE.md` | Global instructions. Imports `writing-style.md`. |
 | `writing-style.md` | `~/.claude/writing-style.md` | Scope, structure and sentence rules |
+| `statusline-command.sh` | `~/.claude/statusline-command.sh` | Fallback status line, where gsd isn't installed |
 | `mods/` | (a plugin marketplace) | `prismantis-skins-helper`, the one mod written here |
 | `fixing-verbosity/` | (docs only) | Why all of this exists, and the original patches verbatim |
 
@@ -133,4 +134,24 @@ ln -sf "$DOTFILES/claude/writing-style.md" "$HOME/.claude/writing-style.md"
 
 **Watch out with `settings.json`.** `/config` and `/plugin` rewrite that file. If a rewrite replaces the file instead of editing it in place, the symlink breaks and changes stop reaching the repo. Check `ls -l ~/.claude/settings.json` still shows an arrow after changing a setting.
 
-`settings.json` also contains absolute `/Users/jyeh4/...` paths in its hooks and in the `jyeh4-mods` marketplace entry. It works on any machine with the same username.
+`settings.json` is portable across machines and usernames:
+
+- Hooks use `$HOME` and find `node` on the PATH, and each one is skipped when its script is missing. So the gsd hooks run on the work machine and do nothing on one without `~/.claude/hooks`. They are written as `[ ! -f "$f" ] || node "$f"` so a guard's exit code 2 (block) still gets through. `... && node "$f" || true` would swallow it.
+- The status line uses gsd's when it is installed, and `statusline-command.sh` from this folder otherwise.
+- The `jyeh4-mods` marketplace path is `~/dotfiles/claude/mods`. Claude Code expands the `~` into its own `~/.claude/plugins/known_marketplaces.json` at session start and leaves `settings.json` untouched. Tested 2026-10-14 on 2.1.296.
+
+Each machine's own copy of the gsd hooks still has to be installed there. They are not in this repo.
+
+---
+
+## Per-machine changes
+
+The personal machine is the base. Its changes are committed and pushed, and every other machine pulls them.
+
+The work machine can't push, so anything only it wants (claude-nine, its Daily Diary section in `CLAUDE.md`, a plugin switched off) lives there as one local commit that is never pushed. Update it with:
+
+```bash
+git pull --rebase
+```
+
+The rebase replays the local commit on top of whatever came in. A plain `git pull` would leave a merge commit, and uncommitted edits block the pull entirely. If both sides changed the same lines of `settings.json`, fix the conflict once and `git rebase --continue`.

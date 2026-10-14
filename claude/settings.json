@@ -23,7 +23,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/Users/jyeh4/.claude/hooks/claude-marketplace-hooks/marketplace-setup-hook.sh"
+            "command": "f=\"$HOME/.claude/hooks/claude-marketplace-hooks/marketplace-setup-hook.sh\"; [ ! -x \"$f\" ] || \"$f\""
           }
         ]
       },
@@ -31,7 +31,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"/usr/local/bin/node\" \"/Users/jyeh4/.claude/hooks/gsd-check-update.js\""
+            "command": "f=\"$HOME/.claude/hooks/gsd-check-update.js\"; [ ! -f \"$f\" ] || node \"$f\""
           }
         ]
       },
@@ -39,16 +39,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"/Users/jyeh4/.claude/hooks/gsd-session-state.sh\""
-          }
-        ]
-      },
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/claude-nine/examples/claude-nine-launcher.sh",
-            "async": true
+            "command": "f=\"$HOME/.claude/hooks/gsd-session-state.sh\"; [ ! -f \"$f\" ] || bash \"$f\""
           }
         ]
       }
@@ -70,7 +61,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"/usr/local/bin/node\" \"/Users/jyeh4/.claude/hooks/gsd-context-monitor.js\"",
+            "command": "f=\"$HOME/.claude/hooks/gsd-context-monitor.js\"; [ ! -f \"$f\" ] || node \"$f\"",
             "timeout": 10
           }
         ]
@@ -80,7 +71,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"/usr/local/bin/node\" \"/Users/jyeh4/.claude/hooks/gsd-read-injection-scanner.js\"",
+            "command": "f=\"$HOME/.claude/hooks/gsd-read-injection-scanner.js\"; [ ! -f \"$f\" ] || node \"$f\"",
             "timeout": 5
           }
         ]
@@ -90,7 +81,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"/Users/jyeh4/.claude/hooks/gsd-graphify-update.sh\"",
+            "command": "f=\"$HOME/.claude/hooks/gsd-graphify-update.sh\"; [ ! -f \"$f\" ] || bash \"$f\"",
             "timeout": 5
           }
         ]
@@ -100,7 +91,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"/Users/jyeh4/.claude/hooks/gsd-phase-boundary.sh\"",
+            "command": "f=\"$HOME/.claude/hooks/gsd-phase-boundary.sh\"; [ ! -f \"$f\" ] || bash \"$f\"",
             "timeout": 5
           }
         ]
@@ -112,7 +103,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"/usr/local/bin/node\" \"/Users/jyeh4/.claude/hooks/gsd-prompt-guard.js\"",
+            "command": "f=\"$HOME/.claude/hooks/gsd-prompt-guard.js\"; [ ! -f \"$f\" ] || node \"$f\"",
             "timeout": 5
           }
         ]
@@ -122,7 +113,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"/usr/local/bin/node\" \"/Users/jyeh4/.claude/hooks/gsd-read-guard.js\"",
+            "command": "f=\"$HOME/.claude/hooks/gsd-read-guard.js\"; [ ! -f \"$f\" ] || node \"$f\"",
             "timeout": 5
           }
         ]
@@ -132,7 +123,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"/usr/local/bin/node\" \"/Users/jyeh4/.claude/hooks/gsd-workflow-guard.js\"",
+            "command": "f=\"$HOME/.claude/hooks/gsd-workflow-guard.js\"; [ ! -f \"$f\" ] || node \"$f\"",
             "timeout": 5
           }
         ]
@@ -142,7 +133,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"/usr/local/bin/node\" \"/Users/jyeh4/.claude/hooks/gsd-worktree-path-guard.js\"",
+            "command": "f=\"$HOME/.claude/hooks/gsd-worktree-path-guard.js\"; [ ! -f \"$f\" ] || node \"$f\"",
             "timeout": 5
           }
         ]
@@ -152,7 +143,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"/Users/jyeh4/.claude/hooks/gsd-validate-commit.sh\"",
+            "command": "f=\"$HOME/.claude/hooks/gsd-validate-commit.sh\"; [ ! -f \"$f\" ] || bash \"$f\"",
             "timeout": 5
           }
         ]
@@ -163,7 +154,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"/usr/local/bin/node\" \"/Users/jyeh4/.claude/hooks/gsd-context-monitor.js\"",
+            "command": "f=\"$HOME/.claude/hooks/gsd-context-monitor.js\"; [ ! -f \"$f\" ] || node \"$f\"",
             "timeout": 10
           }
         ]
@@ -174,7 +165,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"/usr/local/bin/node\" \"/Users/jyeh4/.claude/hooks/gsd-context-monitor.js\"",
+            "command": "f=\"$HOME/.claude/hooks/gsd-context-monitor.js\"; [ ! -f \"$f\" ] || node \"$f\"",
             "timeout": 10
           }
         ]
@@ -185,7 +176,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"/usr/local/bin/node\" \"/Users/jyeh4/.claude/hooks/gsd-context-monitor.js\"",
+            "command": "f=\"$HOME/.claude/hooks/gsd-context-monitor.js\"; [ ! -f \"$f\" ] || node \"$f\"",
             "timeout": 10
           }
         ]
@@ -197,7 +188,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"/usr/local/bin/node\" \"/Users/jyeh4/.claude/hooks/gsd-config-reload.js\"",
+            "command": "f=\"$HOME/.claude/hooks/gsd-config-reload.js\"; [ ! -f \"$f\" ] || node \"$f\"",
             "timeout": 8
           }
         ]
@@ -206,7 +197,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "\"/usr/local/bin/node\" \"/Users/jyeh4/.claude/hooks/gsd-statusline.js\""
+    "command": "f=\"$HOME/.claude/hooks/gsd-statusline.js\"; if [ -f \"$f\" ]; then node \"$f\"; else bash \"$HOME/.claude/statusline-command.sh\"; fi"
   },
   "enabledPlugins": {
     "pyright-lsp@claude-plugins-official": true,
@@ -214,7 +205,9 @@
     "frontend-design@claude-plugins-official": true,
     "prismantis@prismantis": true,
     "skins@hellosverre-mods": true,
-    "prismantis-skins-helper@jyeh4-mods": true
+    "prismantis-skins-helper@jyeh4-mods": true,
+    "lua-lsp@claude-plugins-official": true,
+    "clangd-lsp@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "prismantis": {
@@ -232,7 +225,7 @@
     "jyeh4-mods": {
       "source": {
         "source": "directory",
-        "path": "/Users/jyeh4/dotfiles/claude/mods"
+        "path": "~/dotfiles/claude/mods"
       }
     }
   },
@@ -259,5 +252,7 @@
   },
   "tui": "fullscreen",
   "verbose": true,
-  "teammateMode": "tmux"
+  "teammateMode": "tmux",
+  "effortLevel": "high",
+  "agentPushNotifEnabled": true
 }
