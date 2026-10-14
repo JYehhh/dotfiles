@@ -451,7 +451,7 @@ vim.keymap.set("v", "<leader>a", "<cmd>ClaudeCodeSend<cr>", { desc = "Claude Cod
 -- left OFF -- see the note at the bottom of this block.
 --
 -- Grammars are per-language and compiled to a .so on this machine (hence the
--- C compiler and tree-sitter-cli in brew.txt). This is exactly the step that
+-- C compiler and the tree-sitter CLI from install.sh). This is exactly the step that
 -- fails on the locked-down work laptop, which is why nothing load-bearing
 -- depends on it: if the parser is missing, descriptions still render, just
 -- without the styling.

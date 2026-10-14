@@ -92,9 +92,27 @@ while read -r group url name _; do
   fi
 done < "$DOTFILES/nvim/plugins.txt"
 
+echo "==> Installing the tree-sitter CLI"
+# nvim-treesitter's main branch shells out to this to build grammars, and wants
+# the native binary, not the npm wrapper. Not from Homebrew: on an older macOS
+# it has no prebuilt package, so it compiles llvm and rust from source (hours).
+# The project's release binary is the same thing, prebuilt. Gated on brew only
+# as a marker for "not the work laptop", which keeps the grammar step below
+# skipped there, as before.
+if command -v tree-sitter >/dev/null 2>&1; then
+  echo "  - already installed ($(tree-sitter --version)), skipping"
+elif command -v brew >/dev/null 2>&1; then
+  arch=$(uname -m); [ "$arch" = x86_64 ] && arch=x64
+  mkdir -p "$HOME/.local/bin"
+  curl -fsSL "https://github.com/tree-sitter/tree-sitter/releases/latest/download/tree-sitter-macos-$arch.gz" \
+    | gunzip > "$HOME/.local/bin/tree-sitter"
+  chmod +x "$HOME/.local/bin/tree-sitter"
+  export PATH="$HOME/.local/bin:$PATH"
+fi
+
 echo "==> Compiling Treesitter grammars (from nvim/parsers.txt)"
 # Guarded exactly like Homebrew above, and for the same machine: building a
-# grammar needs the tree-sitter CLI (a brew formula) plus a C compiler, and the
+# grammar needs the tree-sitter CLI (installed above) plus a C compiler, and the
 # work laptop has neither a package manager to get the CLI nor an appetite for
 # loading the freshly-built .so. Skipping is harmless -- Neovim's seven builtin
 # grammars still work, and init.lua enables highlighting only where the grammar
