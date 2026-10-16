@@ -229,6 +229,7 @@
       }
     }
   },
+  "effortLevel": "high",
   "pluginConfigs": {
     "prismantis@prismantis": {
       "options": {
@@ -251,8 +252,7 @@
     }
   },
   "tui": "fullscreen",
-  "verbose": true,
+  "verbose": false,
   "teammateMode": "tmux",
-  "effortLevel": "high",
   "agentPushNotifEnabled": true
 }
